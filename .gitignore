@@ -1,0 +1,28 @@
+# Gradle / Android Studio
+.gradle/
+.idea/
+local.properties
+**/build/
+*.iml
+
+# Local signing and credentials
+*.jks
+*.keystore
+keystore.properties
+secrets.properties
+google-services.json
+
+# Generated packages and local diagnostics
+*.apk
+*.aab
+outputs/
+work/
+captures/
+
+# Local agent/tool state
+.omx/
+.serena/
+
+# OS / editor
+.DS_Store
+*.swp

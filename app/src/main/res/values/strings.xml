@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Samsung Health Bridge</string>
+    <string name="sync_now">Sync now</string>
+    <string name="connect_google_sheet">Connect Google Sheet</string>
+    <string name="import_history">Import 90 days once</string>
+    <string name="daily_preview">Latest daily row</string>
+    <string name="privacy_title">Privacy</string>
+    <string name="privacy_body">Samsung Health Bridge reads only steps, exercise sessions, sleep, weight, and body fat that you explicitly allow in Health Connect. It writes daily summaries and, only when you press the diagnostic export button, raw records and available aggregates directly to one Google Sheet in your Google Drive. It never reads exercise routes.\n\nHealth values are not sent to any server operated by this app, are not written to production logs, and are not stored permanently inside the app. The app stores only the spreadsheet identifier, the last synchronization time, and a non-health status message.\n\nYou can revoke Health Connect permissions or Google Drive access at any time.</string>
+</resources>
