@@ -1,5 +1,11 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
+fun String.asBuildConfigString(): String =
+    "\"${replace("\\", "\\\\").replace("\"", "\\\"")}\""
+
+val canonicalSpreadsheetId = providers.gradleProperty("canonicalSpreadsheetId").orElse("")
+val legacySpreadsheetIds = providers.gradleProperty("legacySpreadsheetIds").orElse("")
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -13,9 +19,24 @@ android {
         applicationId = "com.roktober.samsunghealthbridge"
         minSdk = 26
         targetSdk = 36
-        versionCode = 4
-        versionName = "1.1.2"
+        versionCode = 9
+        versionName = "1.1.7"
 
+        buildConfigField(
+            "String",
+            "CANONICAL_SPREADSHEET_ID",
+            canonicalSpreadsheetId.get().asBuildConfigString(),
+        )
+        buildConfigField(
+            "String",
+            "LEGACY_SPREADSHEET_IDS",
+            legacySpreadsheetIds.get().asBuildConfigString(),
+        )
+
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
@@ -38,6 +59,10 @@ android {
             jvmTarget.set(JvmTarget.JVM_17)
         }
     }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 dependencies {
@@ -49,4 +74,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("androidx.work:work-testing:2.11.2")
+    testImplementation("org.robolectric:robolectric:4.16.1")
 }

@@ -39,10 +39,11 @@ On the phone:
 1. In Samsung Health, enable its Health Connect integration and allow it to write the needed data types.
 2. Open **Samsung Health Bridge** and tap **Grant health permissions**.
 3. If shown, tap **Allow background sync**. This permission is requested only when the device supports it.
-4. Tap **Connect Google Sheet**, choose the Google account, and approve the single-file Drive access.
-5. Tap **Sync now**. The app writes rows, reads the same dates back, and only then reports success.
-6. Optional: tap **Import 90 days once**. History permission is requested only for this explicit initial import.
-7. For troubleshooting, tap **Export all raw data + aggregates**. If available, Health Connect asks once for history access. The app then fills `Daily`, creates/updates `Raw`, and verifies every exported row by reading it back. Repeating the export updates matching keys instead of creating duplicates.
+4. Before relying on unattended sync, exempt **Samsung Health Bridge** from Android battery optimization. On Samsung, also set App info → Battery to **Unrestricted**; some One UI versions expose these as two separate controls.
+5. Tap **Connect Google Sheet**, choose the intended Google account, and approve the `drive.file` request.
+6. Tap **Sync now**. The app writes rows, reads the same dates back, and only then reports success.
+7. Optional: tap **Import 90 days once**. History permission is requested only for this explicit initial import.
+8. For troubleshooting, tap **Export all raw data + aggregates**. If available, Health Connect asks once for history access. The app then fills `Daily`, creates/updates `Raw`, and verifies every exported row by reading it back. Repeating the export updates matching keys instead of creating duplicates.
 
 ## Sheet schema
 
@@ -77,11 +78,13 @@ exported_at
 
 ## Background task
 
-`daily-health-sheet-sync` is registered as unique periodic WorkManager work with a 24-hour interval, a 2-hour flex window, and a network constraint. After the one-time Health Connect and Google grants, normal operation is fully unattended: the app does not need to be opened and no button needs to be pressed. Each run writes the dates touched by the last 72 hours and reads one additional preceding context day so overnight sleep and other interval records are not clipped at the first boundary. The extra context day is never written unless it is itself inside the rolling window.
+`daily-health-sheet-sync-v2` is registered as unique periodic WorkManager work with a 24-hour interval and a 2-hour flex window. It intentionally has no JobScheduler network constraint: on Samsung, a background UID can be denied connectivity until its job starts, so requiring connectivity before launch creates a deadlock. Transient Google/Sheets network failures are retried inside the worker instead. After the one-time Health Connect and Google grants, normal operation is unattended. Each run writes the dates touched by the last 72 hours and reads one additional preceding context day so overnight sleep and other interval records are not clipped at the first boundary. The extra context day is never written unless it is itself inside the rolling window.
+
+On Samsung, also exempt **Samsung Health Bridge** from battery optimization. `Unrestricted` background usage alone may still leave JobScheduler with `readyNotRestrictedInBg=false`; the app must appear in the device-idle whitelist for the OEM freezer to release it for scheduled jobs.
 
 The foreground buttons are diagnostics and recovery controls only: use them after reinstalling permissions, resolving Google consent, or deliberately rebuilding all accessible history. They are not part of the daily collection workflow.
 
-To inspect it, open Android Studio → **App Inspection** → **Background Task Inspector**, select `com.roktober.samsunghealthbridge`, and look for `daily-health-sheet-sync`. If Google returns an interactive consent resolution or Health permission was revoked, the worker records a safe status and waits for a foreground tap instead of opening UI in the background.
+To inspect it, open Android Studio → **App Inspection** → **Background Task Inspector**, select `com.roktober.samsunghealthbridge`, and look for `daily-health-sheet-sync-v2`. If Google returns an interactive consent resolution or Health permission was revoked, the worker records a safe status and waits for a foreground tap instead of opening UI in the background.
 
 ## Permission recovery
 

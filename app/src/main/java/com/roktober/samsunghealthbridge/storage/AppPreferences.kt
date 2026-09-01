@@ -2,15 +2,33 @@ package com.roktober.samsunghealthbridge.storage
 
 import android.annotation.SuppressLint
 import android.content.Context
+import com.roktober.samsunghealthbridge.BuildConfig
 import java.time.Instant
 
 @SuppressLint("UseKtx") // spreadsheetId requires checking synchronous commit() success.
-class AppPreferences(context: Context) {
+class AppPreferences(
+    context: Context,
+    private val spreadsheetTargetResolver: SpreadsheetTargetResolver =
+        SpreadsheetTargetResolver(
+            canonicalId = BuildConfig.CANONICAL_SPREADSHEET_ID,
+            legacyIds =
+                BuildConfig.LEGACY_SPREADSHEET_IDS.split(',')
+                    .filter(String::isNotBlank)
+                    .toSet(),
+        ),
+) {
     private val preferences =
         context.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
 
     var spreadsheetId: String?
-        get() = preferences.getString(KEY_SPREADSHEET_ID, null)
+        get() {
+            val storedId = preferences.getString(KEY_SPREADSHEET_ID, null)
+            val resolvedId = spreadsheetTargetResolver.resolve(storedId)
+            if (resolvedId != storedId) {
+                spreadsheetId = resolvedId
+            }
+            return resolvedId
+        }
         set(value) {
             val stored = preferences.edit().apply {
                 if (value == null) remove(KEY_SPREADSHEET_ID) else putString(KEY_SPREADSHEET_ID, value)

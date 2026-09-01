@@ -198,9 +198,18 @@ class SyncCoordinator(
         val authorization =
             try {
                 authorizationManager.authorize()
-            } catch (_: ApiException) {
-                preferences.lastStatus = AppPreferences.STATUS_GOOGLE_ACTION_REQUIRED
-                return BackgroundSyncResult.NeedsUserAction
+            } catch (error: ApiException) {
+                when (GoogleAuthorizationFailureClassifier.classify(error.statusCode)) {
+                    GoogleAuthorizationFailureDisposition.RETRY_LATER -> {
+                        preferences.lastStatus = AppPreferences.STATUS_ERROR
+                        return BackgroundSyncResult.RetryLater
+                    }
+
+                    GoogleAuthorizationFailureDisposition.NEEDS_USER_ACTION -> {
+                        preferences.lastStatus = AppPreferences.STATUS_GOOGLE_ACTION_REQUIRED
+                        return BackgroundSyncResult.NeedsUserAction
+                    }
+                }
             } catch (_: Exception) {
                 preferences.lastStatus = AppPreferences.STATUS_ERROR
                 return BackgroundSyncResult.RetryLater
